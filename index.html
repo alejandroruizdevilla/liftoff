@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LIFTOFF // Rocket Sim Index</title>
+<meta name="description" content="Nine hand-picked rocket simulators — from kitchen-table model rockets to full Apollo cockpits. With daily spaceflight news, live launch countdowns, and a recommendation quiz." />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<meta name="theme-color" content="#04060f" />
+
+<!-- Open Graph -->
+<meta property="og:type" content="website" />
+<meta property="og:title" content="LIFTOFF // The Rocket Sim Index" />
+<meta property="og:description" content="Nine hand-picked rocket simulators — model rocketry to Apollo cockpits. Live news, launch countdowns, and a guided quiz." />
+<meta property="og:image" content="favicon.svg" />
+<meta property="og:site_name" content="LIFTOFF" />
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="LIFTOFF // The Rocket Sim Index" />
+<meta name="twitter:description" content="Nine hand-picked rocket simulators — model rocketry to Apollo cockpits." />
+<meta name="twitter:image" content="favicon.svg" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ============ BOOT / LOADING SCREEN ============ -->
+<div id="boot" class="boot-screen" role="status" aria-live="polite">
+  <div class="boot-stage">
+    <div class="boot-ring"></div>
+    <div class="boot-ring inner"></div>
+    <svg class="boot-rocket" viewBox="0 0 200 360" aria-hidden="true">
+      <defs>
+        <linearGradient id="bootBody" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#cfd6ee"/>
+          <stop offset="50%" stop-color="#fff"/>
+          <stop offset="100%" stop-color="#7e89b8"/>
+        </linearGradient>
+        <linearGradient id="bootNose" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#ff6a1f"/>
+          <stop offset="100%" stop-color="#c33c00"/>
+        </linearGradient>
+        <linearGradient id="bootFlame" x1="50%" y1="0%" x2="50%" y2="100%">
+          <stop offset="0%" stop-color="#fff" stop-opacity="0.9"/>
+          <stop offset="30%" stop-color="#ffd966"/>
+          <stop offset="70%" stop-color="#ff6a1f"/>
+          <stop offset="100%" stop-color="#ff1f3d" stop-opacity="0"/>
+        </linearGradient>
+        <radialGradient id="bootWin" cx="50%" cy="40%" r="60%">
+          <stop offset="0%" stop-color="#bff5ff"/>
+          <stop offset="60%" stop-color="#5ae0ff"/>
+          <stop offset="100%" stop-color="#0f5d7a"/>
+        </radialGradient>
+      </defs>
+      <path d="M100 10 L130 90 L70 90 Z" fill="url(#bootNose)"/>
+      <rect x="70" y="90" width="60" height="170" fill="url(#bootBody)"/>
+      <rect x="70" y="120" width="60" height="6" fill="#ff6a1f"/>
+      <rect x="70" y="240" width="60" height="6" fill="#ff6a1f"/>
+      <circle cx="100" cy="160" r="16" fill="url(#bootWin)" stroke="#3a4470" stroke-width="3"/>
+      <circle cx="95" cy="155" r="4" fill="#fff" opacity="0.6"/>
+      <path d="M70 230 L40 280 L70 280 Z" fill="#ff6a1f"/>
+      <path d="M130 230 L160 280 L130 280 Z" fill="#ff6a1f"/>
+      <path d="M70 230 L70 280 L85 280 Z" fill="#c33c00"/>
+      <path d="M130 230 L130 280 L115 280 Z" fill="#c33c00"/>
+      <path d="M82 260 L118 260 L125 290 L75 290 Z" fill="#3a4470"/>
+      <ellipse cx="100" cy="290" rx="25" ry="5" fill="#1a1f3a"/>
+      <g class="boot-flame">
+        <path d="M80 290 Q100 350 120 290 Q115 320 100 360 Q85 320 80 290 Z" fill="url(#bootFlame)"/>
+        <path d="M88 290 Q100 330 112 290 Q108 310 100 340 Q92 310 88 290 Z" fill="#fff" opacity="0.7"/>
+      </g>
+    </svg>
+  </div>
+  <div class="boot-brand" data-i18n="boot.brand">LIFTOFF</div>
+  <div class="boot-tagline" data-i18n="boot.tagline">INITIALIZING SYSTEMS</div>
+  <div class="boot-bar"><div class="boot-bar-fill" id="bootBarFill"></div></div>
+  <div class="boot-meta">
+    <span id="bootLabel" data-i18n="boot.step.1">BOOT · CHECKING SUBSYSTEMS</span>
+    <span id="bootPct">0%</span>
+  </div>
+</div>
+
+<canvas id="stars"></canvas>
+<div class="aurora"></div>
+<div class="grid-overlay"></div>
+<div class="cursor-glow" id="cursorGlow"></div>
+
+<!-- ============ HUD ============ -->
+<div class="hud">
+  <div class="hud-left">
+    <span class="dot"></span>
+    <span class="live" data-i18n="hud.sys">SYS · NOMINAL</span>
+    <span class="hud-hide" data-i18n="hud.net">NET · ONLINE</span>
+    <span class="hud-hide" data-i18n="hud.ctrl">CTRL · MISSION</span>
+  </div>
+  <div class="hud-right">
+    <button class="hud-btn" id="muteBtn" data-i18n-attr="title:hud.mute.on" title="Toggle sound">
+      <span id="muteIcon">♪</span>
+    </button>
+    <button class="hud-btn" id="settingsBtn" data-i18n-attr="title:hud.settings" title="Settings">⚙</button>
+    <span id="utc">T+ 00:00:00</span>
+    <span class="hud-hide" data-i18n="hud.loc">CAPE CANAVERAL</span>
+  </div>
+</div>
+
+<!-- ============ HOME VIEW ============ -->
+<div id="home">
+
+<section class="hero">
+  <div class="hero-text">
+    <div class="eyebrow" data-i18n="hero.eyebrow">Mission Brief · Vol. 09</div>
+    <h1 class="title">
+      <span class="glow" data-i18n="hero.title.1">Liftoff</span><br />
+      <span class="stroke" data-i18n="hero.title.2">starts on</span><br />
+      <span class="accent" data-i18n="hero.title.3">your screen.</span>
+    </h1>
+    <p class="lede" data-i18n-html="hero.lede.html">
+      Nine rocket simulators, hand-picked. From <strong>kitchen-table model rockets</strong>
+      to <strong>full Apollo cockpits</strong> — the ones worth your time, ranked by an
+      obsessive who has crashed thousands of virtual rockets so you don't have to.
+    </p>
+    <div class="cta-row">
+      <button class="btn primary" id="launchBtn">
+        <span data-i18n="hero.cta.launch">Launch the Index</span>
+        <span class="arrow">→</span>
+      </button>
+      <a class="btn" href="#/quiz">
+        <span data-i18n="hero.cta.quiz">Find My Sim</span>
+      </a>
+      <a class="btn" href="#/compare">
+        <span data-i18n="hero.cta.compare">Compare Sims</span>
+      </a>
+      <a class="btn ghost" href="#news">
+        <span data-i18n="hero.cta.briefing">Today's Briefing</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="rocket-stage" id="rocketStage">
+    <div class="launch-ring"></div>
+    <div class="launch-ring inner"></div>
+    <div class="rocket-trail" id="rocketTrail"></div>
+
+    <svg class="rocket-svg" id="rocketSvg" viewBox="0 0 200 360" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="body" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#cfd6ee"/>
+          <stop offset="50%" stop-color="#fff"/>
+          <stop offset="100%" stop-color="#7e89b8"/>
+        </linearGradient>
+        <linearGradient id="nose" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#ff6a1f"/>
+          <stop offset="100%" stop-color="#c33c00"/>
+        </linearGradient>
+        <linearGradient id="flameGrad" x1="50%" y1="0%" x2="50%" y2="100%">
+          <stop offset="0%" stop-color="#fff" stop-opacity="0.9"/>
+          <stop offset="30%" stop-color="#ffd966"/>
+          <stop offset="70%" stop-color="#ff6a1f"/>
+          <stop offset="100%" stop-color="#ff1f3d" stop-opacity="0"/>
+        </linearGradient>
+        <radialGradient id="window" cx="50%" cy="40%" r="60%">
+          <stop offset="0%" stop-color="#bff5ff"/>
+          <stop offset="60%" stop-color="#5ae0ff"/>
+          <stop offset="100%" stop-color="#0f5d7a"/>
+        </radialGradient>
+      </defs>
+      <path d="M100 10 L130 90 L70 90 Z" fill="url(#nose)"/>
+      <rect x="70" y="90" width="60" height="170" fill="url(#body)"/>
+      <rect x="70" y="120" width="60" height="6" fill="#ff6a1f"/>
+      <rect x="70" y="240" width="60" height="6" fill="#ff6a1f"/>
+      <circle cx="100" cy="160" r="16" fill="url(#window)" stroke="#3a4470" stroke-width="3"/>
+      <circle cx="95" cy="155" r="4" fill="#fff" opacity="0.6"/>
+      <path d="M70 230 L40 280 L70 280 Z" fill="#ff6a1f"/>
+      <path d="M130 230 L160 280 L130 280 Z" fill="#ff6a1f"/>
+      <path d="M70 230 L70 280 L85 280 Z" fill="#c33c00"/>
+      <path d="M130 230 L130 280 L115 280 Z" fill="#c33c00"/>
+      <path d="M82 260 L118 260 L125 290 L75 290 Z" fill="#3a4470"/>
+      <ellipse cx="100" cy="290" rx="25" ry="5" fill="#1a1f3a"/>
+      <g class="flame" id="flame">
+        <path d="M80 290 Q100 350 120 290 Q115 320 100 360 Q85 320 80 290 Z" fill="url(#flameGrad)"/>
+        <path d="M88 290 Q100 330 112 290 Q108 310 100 340 Q92 310 88 290 Z" fill="#fff" opacity="0.7"/>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<!-- ============ TELEMETRY MARQUEE ============ -->
+<div class="telemetry">
+  <div class="telemetry-track">
+    <span>Δv = Isp · g₀ · ln(m₀/m_f)</span>
+    <span>Saturn V — 3,408,200 lb thrust</span>
+    <span>Falcon 9 — 200+ successful landings</span>
+    <span>Apogee classified</span>
+    <span>OpenRocket v23.09 stable</span>
+    <span>Kerbin escape velocity 3,432 m/s</span>
+    <span>Δv = Isp · g₀ · ln(m₀/m_f)</span>
+    <span>Saturn V — 3,408,200 lb thrust</span>
+    <span>Falcon 9 — 200+ successful landings</span>
+    <span>Apogee classified</span>
+    <span>OpenRocket v23.09 stable</span>
+    <span>Kerbin escape velocity 3,432 m/s</span>
+  </div>
+</div>
+
+<!-- ============ NEWS SECTION ============ -->
+<section class="news-section" id="news">
+  <div class="section-label" data-i18n="news.label">// LIVE FEED</div>
+  <h2 class="section-title" data-i18n="news.title">Mission Briefing</h2>
+  <p class="section-sub">
+    <span data-i18n="news.sub">Real spaceflight news from around the world, refreshed daily.</span>
+    <span class="news-meta" id="newsMeta"><span data-i18n="news.updated">Updated</span> <span id="newsDate">—</span> · Source: Spaceflight News API</span>
+  </p>
+
+  <div class="source-filters" id="sourceFilters"></div>
+
+  <div class="news-grid" id="newsGrid">
+    <div class="news-loading">
+      <div class="spinner"></div>
+      <span data-i18n="news.loading">Establishing uplink to ground stations...</span>
+    </div>
+  </div>
+
+  <div class="news-footer">
+    <button class="btn" id="refreshNews">
+      <span data-i18n="news.refresh">Force Refresh</span>
+      <span class="arrow">↻</span>
+    </button>
+  </div>
+</section>
+
+<!-- ============ UPCOMING LAUNCHES ============ -->
+<section class="launches-section" id="launches">
+  <div class="section-label" data-i18n="launches.label">// T-MINUS SCHEDULE</div>
+  <h2 class="section-title" data-i18n="launches.title">Upcoming Launches</h2>
+  <p class="section-sub">
+    <span data-i18n="launches.sub">Live countdowns to the next missions on the worldwide pad. Status, vehicle, mission, and orbit pulled from the public Launch Library 2 feed.</span>
+    <span class="news-meta" data-i18n="launches.auto">Auto-refresh hourly · Source: The Space Devs</span>
+  </p>
+
+  <div class="launches-grid" id="launchesGrid">
+    <div class="news-loading">
+      <div class="spinner"></div>
+      <span data-i18n="launches.loading">Loading launch schedule...</span>
+    </div>
+  </div>
+
+  <div class="news-footer">
+    <button class="btn" id="refreshLaunches">
+      <span data-i18n="launches.refresh">Refresh Schedule</span>
+      <span class="arrow">↻</span>
+    </button>
+  </div>
+</section>
+
+<!-- ============ LAUNCH STATISTICS ============ -->
+<section class="stats-section" id="stats">
+  <div class="section-label" data-i18n="stats.label">// FLIGHT RECORDS</div>
+  <h2 class="section-title" data-i18n="stats.title">Launch Statistics</h2>
+  <p class="section-sub">
+    <span data-i18n="stats.sub">How busy is the worldwide pad? A decade of orbital launch attempts, compiled from public launch logs.</span>
+    <span class="news-meta" data-i18n="stats.note">Approximate figures · curated snapshot · early 2026</span>
+  </p>
+
+  <div class="stats-tiles" id="statsTiles"></div>
+  <div class="stats-charts" id="statsCharts"></div>
+
+  <div class="news-footer">
+    <button class="btn" id="statsTableBtn">
+      <span id="statsTableBtnLabel">View data table</span>
+      <span class="arrow">▤</span>
+    </button>
+  </div>
+  <div class="stats-tables" id="statsTables" hidden></div>
+</section>
+
+<!-- ============ MANIFEST ============ -->
+<main id="index">
+  <div class="section-label" data-i18n="manifest.label">// 09 ENTRIES</div>
+  <h2 class="section-title" data-i18n="manifest.title">The Launch Manifest</h2>
+  <p class="section-sub" data-i18n="manifest.sub">Click any entry to open its full mission file. Filter by category, scan the specs, and dive in. No affiliate links, no sponsorships, no fluff.</p>
+
+  <div class="search-wrap">
+    <span class="search-icon">⌕</span>
+    <input class="search-input" id="searchInput" type="search" autocomplete="off" placeholder="Search by name, tag, or keyword…" data-i18n-attr="placeholder:manifest.search" />
+    <button class="search-clear" id="searchClear" data-i18n-attr="title:manifest.searchClear" title="Clear search" hidden>✕</button>
+  </div>
+
+  <div class="filters" id="filters">
+    <button class="chip active" data-filter="all" data-i18n="filter.all">All Systems</button>
+    <button class="chip" data-filter="model" data-i18n="filter.model">Model</button>
+    <button class="chip" data-filter="space" data-i18n="filter.space">Spaceflight</button>
+    <button class="chip" data-filter="game" data-i18n="filter.game">Game</button>
+    <button class="chip" data-filter="free" data-i18n="filter.free">Free</button>
+    <button class="chip" data-filter="realistic" data-i18n="filter.realistic">Hyper-real</button>
+  </div>
+
+  <div class="grid" id="grid"></div>
+</main>
+
+</div><!-- /home -->
+
+<!-- ============ DETAIL VIEW ============ -->
+<div id="detail" class="detail-view"></div>
+
+<!-- ============ COMPARE VIEW ============ -->
+<div id="compare" class="compare-view"></div>
+
+<!-- ============ QUIZ MODAL ============ -->
+<div id="quizModal" class="quiz-modal"></div>
+
+<!-- ============ SETTINGS MODAL ============ -->
+<div id="settingsModal" class="quiz-modal"></div>
+
+<!-- ============ LAUNCH OVERLAY ============ -->
+<div class="launch-overlay" id="launchOverlay">
+  <div class="launch-grid"></div>
+  <div class="launch-content">
+    <div class="launch-status" id="launchStatus" data-i18n="launch.armed">SYSTEMS ARMED</div>
+    <div class="launch-count" id="launchCount">5</div>
+    <div class="launch-bar"><div class="launch-bar-fill" id="launchBar"></div></div>
+    <div class="launch-telemetry mono" id="launchTelemetry">
+      <div>STAGE 1 · NOMINAL</div>
+      <div>FUEL · 100%</div>
+      <div>GUIDANCE · INTERNAL</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="ascii">▲ ▲ ▲</div>
+  <div data-i18n="footer.eot">END OF TRANSMISSION · 2026 · BUILT FOR CURIOUS HUMANS</div>
+  <div style="margin-top: 8px; opacity: 0.6;" data-i18n="footer.verify">verify all prices and availability before purchase</div>
+</footer>
+
+<script src="i18n.js"></script>
+<script src="boot.js"></script>
+<script src="sims.js"></script>
+<script src="news.js"></script>
+<script src="launches.js"></script>
+<script src="stats.js"></script>
+<script src="audio.js"></script>
+<script src="launch.js"></script>
+<script src="quiz.js"></script>
+<script src="compare.js"></script>
+<script src="settings.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
