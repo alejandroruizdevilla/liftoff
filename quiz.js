@@ -146,8 +146,8 @@ window.Quiz = (function () {
     const modal = document.getElementById("quizModal");
     const ranked = recommend(state.answers);
     const top = ranked[0];
-    const runners = ranked.slice(1, 3);
-    const sim = top.sim;
+    const runners = ranked.slice(1, 3).map(r => ({ ...r, sim: window.I18n.sim(r.sim) }));
+    const sim = window.I18n.sim(top.sim);
     const why = top.reasons.length
       ? top.reasons.join(" · ")
       : "best overall fit";

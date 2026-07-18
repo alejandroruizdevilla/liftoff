@@ -47,6 +47,27 @@ window.I18n = (function () {
       "launches.netLbl": "NET",
       "launches.padLbl": "Pad",
       "launches.orbitLbl": "Orbit",
+      "launches.recent.title": "Recent Results",
+      "launches.recent.success": "SUCCESS",
+      "launches.recent.failure": "FAILURE",
+      "launches.recent.partial": "PARTIAL",
+
+      "spotlight.label": "// SIM OF THE DAY",
+
+      "dv.label": "// FLIGHT COMPUTER",
+      "dv.title": "The Δv Calculator",
+      "dv.sub": "Tsiolkovsky's rocket equation, live. Drag the sliders and see how far your rocket could go.",
+      "dv.isp": "Specific impulse (Isp)",
+      "dv.wet": "Wet mass (m₀)",
+      "dv.dry": "Dry mass (m_f)",
+      "dv.result": "Total Δv",
+      "dv.note": "Idealized single stage in vacuum — no drag, no gravity losses, no staging. Real rockets cheat with staging.",
+      "dv.th.leo": "Low Earth orbit",
+      "dv.th.gto": "GTO transfer",
+      "dv.th.tli": "Trans-lunar injection",
+      "dv.th.mars": "Mars transfer",
+      "dv.reached": "GO",
+      "dv.missing": "{n} m/s short",
 
       // Launch statistics
       "stats.label": "// FLIGHT RECORDS",
@@ -55,6 +76,8 @@ window.I18n = (function () {
       "stats.note": "Approximate figures · curated snapshot · early 2026",
       "stats.tile.attempts": "Orbital attempts · 2025",
       "stats.tile.attempts.detail": "worldwide, all providers",
+      "stats.tile.ytd": "Orbital attempts · {y} YTD",
+      "stats.live": "live · The Space Devs",
       "stats.tile.rate": "Success rate · 2025",
       "stats.tile.growth": "Traffic growth",
       "stats.tile.vehicle": "Most-flown vehicle · 2025",
@@ -251,6 +274,27 @@ window.I18n = (function () {
       "launches.netLbl": "NET",
       "launches.padLbl": "Plataforma",
       "launches.orbitLbl": "Órbita",
+      "launches.recent.title": "Resultados Recientes",
+      "launches.recent.success": "ÉXITO",
+      "launches.recent.failure": "FALLO",
+      "launches.recent.partial": "PARCIAL",
+
+      "spotlight.label": "// SIM DEL DÍA",
+
+      "dv.label": "// ORDENADOR DE VUELO",
+      "dv.title": "La Calculadora de Δv",
+      "dv.sub": "La ecuación del cohete de Tsiolkovski, en vivo. Mueve los controles y descubre hasta dónde llegaría tu cohete.",
+      "dv.isp": "Impulso específico (Isp)",
+      "dv.wet": "Masa húmeda (m₀)",
+      "dv.dry": "Masa seca (m_f)",
+      "dv.result": "Δv total",
+      "dv.note": "Etapa única idealizada en vacío — sin resistencia, sin pérdidas por gravedad, sin separación de etapas. Los cohetes reales hacen trampa con etapas.",
+      "dv.th.leo": "Órbita baja terrestre",
+      "dv.th.gto": "Transferencia GTO",
+      "dv.th.tli": "Inyección translunar",
+      "dv.th.mars": "Transferencia a Marte",
+      "dv.reached": "GO",
+      "dv.missing": "faltan {n} m/s",
 
       // Estadísticas de lanzamiento
       "stats.label": "// REGISTRO DE VUELO",
@@ -259,6 +303,8 @@ window.I18n = (function () {
       "stats.note": "Cifras aproximadas · instantánea curada · principios de 2026",
       "stats.tile.attempts": "Intentos orbitales · 2025",
       "stats.tile.attempts.detail": "todo el mundo, todos los operadores",
+      "stats.tile.ytd": "Intentos orbitales · {y} acumulado",
+      "stats.live": "en vivo · The Space Devs",
       "stats.tile.rate": "Tasa de éxito · 2025",
       "stats.tile.growth": "Crecimiento del tráfico",
       "stats.tile.vehicle": "Vehículo más lanzado · 2025",
@@ -407,8 +453,9 @@ window.I18n = (function () {
   };
 
   let locale = localStorage.getItem(STORAGE);
-  if (!locale) {
-    locale = (navigator.language || "en").toLowerCase().startsWith("es") ? "es" : "en";
+  if (!locale || !DICT[locale]) {
+    const nav = (navigator.language || "en").toLowerCase();
+    locale = nav.startsWith("es") ? "es" : nav.startsWith("fr") ? "fr" : "en";
   }
 
   function t(key, vars) {
@@ -448,5 +495,19 @@ window.I18n = (function () {
 
   function get() { return locale; }
 
-  return { t, apply, set, get };
+  // Locale packs too big to inline here (e.g. French) register themselves
+  // from later-loaded scripts; sims.i18n.js carries them.
+  function addLocale(name, dict) {
+    if (name && dict) DICT[name] = dict;
+  }
+
+  // Localized view of a sim entry: editorial fields come from SIMS_I18N when a
+  // translation exists for the active locale; everything else falls through.
+  function sim(s) {
+    const dict = window.SIMS_I18N && window.SIMS_I18N[locale];
+    const o = dict && dict[s.id];
+    return o ? Object.assign({}, s, o) : s;
+  }
+
+  return { t, apply, set, get, sim, addLocale };
 })();

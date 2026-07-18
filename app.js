@@ -131,10 +131,34 @@
     return q.toLowerCase().split(/\s+/).every(part => blob.includes(part));
   }
 
+  // Keep the manifest state shareable: #/manifest?filter=free&q=orbital
+  function syncManifestHash() {
+    const params = new URLSearchParams();
+    if (activeFilter !== "all") params.set("filter", activeFilter);
+    if (activeSearch) params.set("q", activeSearch);
+    const qs = params.toString();
+    const target = qs ? "#/manifest?" + qs : "#";
+    if (location.hash !== target && (qs || /^#\/?manifest/.test(location.hash))) {
+      history.replaceState(null, "", target);
+    }
+  }
+
+  function applyManifestParams(qs) {
+    const params = new URLSearchParams(qs || "");
+    const f = params.get("filter") || "all";
+    activeFilter = document.querySelector(`#filters .chip[data-filter="${CSS.escape(f)}"]`) ? f : "all";
+    activeSearch = (params.get("q") || "").trim();
+    searchInput.value = activeSearch;
+    searchClear.hidden = !activeSearch;
+    document.querySelectorAll("#filters .chip").forEach(c =>
+      c.classList.toggle("active", c.dataset.filter === activeFilter));
+    renderCards({ instant: true });
+  }
+
   function renderCards(opts = {}) {
     const instant = !!opts.instant;
     grid.innerHTML = "";
-    const filtered = window.SIMS.filter(s =>
+    const filtered = window.SIMS.map(window.I18n.sim).filter(s =>
       (activeFilter === "all" || s.tags.includes(activeFilter)) &&
       matchesSearch(s, activeSearch)
     );
@@ -177,12 +201,14 @@
     e.target.classList.add("active");
     activeFilter = e.target.dataset.filter;
     window.LFAudio.click();
+    syncManifestHash();
     renderCards();
   });
 
   searchInput.addEventListener("input", () => {
     activeSearch = searchInput.value.trim();
     searchClear.hidden = !activeSearch;
+    syncManifestHash();
     renderCards();
   });
   searchClear.addEventListener("click", () => {
@@ -191,6 +217,7 @@
     searchClear.hidden = true;
     searchInput.focus();
     if (window.LFAudio) window.LFAudio.click();
+    syncManifestHash();
     renderCards();
   });
   // Cmd-K / Ctrl-K focuses search
@@ -203,6 +230,28 @@
   });
 
   renderCards();
+
+  // ============ SIM OF THE DAY ============
+  function renderSpotlight() {
+    const el = document.getElementById("spotlightCard");
+    if (!el) return;
+    const now = new Date();
+    const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
+    const s = window.I18n.sim(window.SIMS[dayOfYear % window.SIMS.length]);
+    el.innerHTML = `
+      <div class="spotlight-label">${escapeHtml(t("spotlight.label"))}</div>
+      <div class="spotlight-glyph">${s.glyph || "🚀"}</div>
+      <div class="spotlight-body">
+        <h3 class="spotlight-name">${escapeHtml(s.name)}</h3>
+        <div class="spotlight-tag">${escapeHtml(s.tagline)}</div>
+        <p class="spotlight-desc">${escapeHtml(s.shortDesc)}</p>
+      </div>
+      <a class="btn primary spotlight-cta" href="#/sim/${s.id}">
+        <span>${escapeHtml(t("card.open"))}</span><span class="arrow">→</span>
+      </a>
+    `;
+  }
+  renderSpotlight();
 
   // ============ NEWS ============
   const newsGrid = document.getElementById("newsGrid");
@@ -258,7 +307,7 @@
     const tag = lastNewsResult.fromCache ? t("news.cached")
               : lastNewsResult.fallback ? t("news.offline")
               : t("news.live");
-    newsDate.textContent = d.toLocaleDateString(window.I18n.get() === "es" ? "es" : undefined, {
+    newsDate.textContent = d.toLocaleDateString(window.I18n.get(), {
       year: "numeric", month: "long", day: "numeric"
     }) + " · " + tag;
   }
@@ -308,6 +357,17 @@
     loadLaunches(true);
   });
 
+  // Recent results strip (non-critical: hidden entirely if the feed fails)
+  (async () => {
+    try {
+      const items = await window.Launches.loadRecent();
+      if (items && items.length) {
+        document.getElementById("recentWrap").hidden = false;
+        window.Launches.renderRecent(document.getElementById("recentStrip"), items);
+      }
+    } catch (_) {}
+  })();
+
   // ============ LAUNCH BUTTON ============
   document.getElementById("launchBtn").addEventListener("click", () => {
     window.LFAudio.resume();
@@ -337,6 +397,7 @@
   }
 
   function renderDetail(sim) {
+    sim = window.I18n.sim(sim);
     const r = sim.ratings;
     const ratingItems = [
       { key: "realism", val: r.realism },
@@ -348,7 +409,8 @@
 
     const related = (sim.related || [])
       .map(id => window.SIM_BY_ID[id])
-      .filter(Boolean);
+      .filter(Boolean)
+      .map(window.I18n.sim);
 
     detailView.innerHTML = `
       <div class="detail-topbar">
@@ -518,6 +580,16 @@
       return;
     }
 
+    // Manifest route with shareable filter/search state
+    const manifestMatch = stripped.match(/^manifest(?:\?(.*))?$/);
+    if (manifestMatch) {
+      showHome();
+      applyManifestParams(manifestMatch[1]);
+      const target = document.getElementById("index");
+      if (target) requestAnimationFrame(() => target.scrollIntoView({ behavior: "smooth", block: "start" }));
+      return;
+    }
+
     // Compare route
     if (/^compare(\/.*)?$/.test(stripped)) {
       homeView.style.display = "none";
@@ -543,6 +615,7 @@
   // ============ I18N RE-RENDERS (instant — no fade-in stagger) ============
   document.addEventListener("i18n:change", () => {
     renderCards({ instant: true });
+    renderSpotlight();
     renderSourceFilters();
     applyNewsFilter({ instant: true });
     refreshNewsMeta();

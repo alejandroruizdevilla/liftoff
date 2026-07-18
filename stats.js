@@ -37,6 +37,37 @@ window.Stats = (function () {
   const first = YEARLY[0];
   const countryTotal = COUNTRIES.reduce((a, c) => a + c.attempts, 0);
 
+  // Live totals from Launch Library 2. `limit=1` queries cost one request each
+  // but return the full filtered `count`, so three requests cover everything.
+  // The public rate limit is tight (15/hr) — cache aggressively.
+  const LIVE_KEY = "liftoff_stats_live_v1";
+  const LIVE_TTL = 24 * 60 * 60 * 1000;
+  let live = null; // { y2025: {attempts, successes}, ytd: {year, attempts} }
+
+  async function countOf(params) {
+    const res = await fetch("https://ll.thespacedevs.com/2.3.0/launches/?limit=1&" + params, {
+      headers: { Accept: "application/json" }
+    });
+    if (!res.ok) throw new Error("LL2 " + res.status);
+    return (await res.json()).count;
+  }
+
+  async function loadLive() {
+    try {
+      const cached = JSON.parse(localStorage.getItem(LIVE_KEY) || "null");
+      if (cached && cached.ts && Date.now() - cached.ts < LIVE_TTL) return cached.data;
+    } catch (_) {}
+    const year = new Date().getFullYear();
+    const [a25, s25, ytd] = await Promise.all([
+      countOf("net__gte=2025-01-01T00:00:00Z&net__lt=2026-01-01T00:00:00Z"),
+      countOf("net__gte=2025-01-01T00:00:00Z&net__lt=2026-01-01T00:00:00Z&status=3"),
+      countOf(`net__gte=${year}-01-01T00:00:00Z&net__lte=` + new Date().toISOString().slice(0, 19) + "Z")
+    ]);
+    const data = { y2025: { attempts: a25, successes: s25 }, ytd: { year, attempts: ytd } };
+    localStorage.setItem(LIVE_KEY, JSON.stringify({ ts: Date.now(), data }));
+    return data;
+  }
+
   function escapeHtml(s) {
     return String(s)
       .replace(/&/g, "&amp;")
@@ -73,14 +104,20 @@ window.Stats = (function () {
 
   // ---------- stat tiles ----------
   function renderTiles(el) {
-    const rate = (latest.successes / latest.attempts) * 100;
-    const growth = latest.attempts / first.attempts;
+    const y25 = live ? live.y2025 : latest;
+    const rate = (y25.successes / y25.attempts) * 100;
+    const growth = y25.attempts / first.attempts;
+    const approx = live ? "" : "~";
+    const src = live ? tt("stats.live") : tt("stats.tile.attempts.detail");
     const tiles = [
-      { label: tt("stats.tile.attempts"), value: "~" + latest.attempts, detail: tt("stats.tile.attempts.detail") },
-      { label: tt("stats.tile.rate"), value: fmtPct(rate), detail: latest.successes + " / " + latest.attempts },
-      { label: tt("stats.tile.growth"), value: "×" + growth.toFixed(1), detail: first.attempts + " → " + latest.attempts + " · " + first.year + "–" + latest.year },
+      { label: tt("stats.tile.attempts"), value: approx + y25.attempts, detail: src },
+      { label: tt("stats.tile.rate"), value: fmtPct(rate), detail: y25.successes + " / " + y25.attempts },
+      { label: tt("stats.tile.growth"), value: "×" + growth.toFixed(1), detail: first.attempts + " → " + y25.attempts + " · " + first.year + "–" + latest.year },
       { label: tt("stats.tile.vehicle"), value: "Falcon 9", detail: tt("stats.tile.vehicle.detail") }
     ];
+    if (live && live.ytd.attempts > 0) {
+      tiles.splice(1, 0, { label: tt("stats.tile.ytd", { y: live.ytd.year }), value: String(live.ytd.attempts), detail: tt("stats.live") });
+    }
     el.innerHTML = tiles.map(x => `
       <div class="stat-tile">
         <div class="stat-tile-label">${escapeHtml(x.label)}</div>
@@ -100,7 +137,7 @@ window.Stats = (function () {
   function renderYearChart(host) {
     const W = 640, H = 300, padL = 46, padR = 12, padT = 26, padB = 30;
     const plotW = W - padL - padR, plotH = H - padT - padB;
-    const maxV = 350;
+    const maxV = Math.max(350, Math.ceil(Math.max(...YEARLY.map(d => d.attempts)) / 100) * 100);
     const n = YEARLY.length;
     const slot = plotW / n;
     const barW = Math.min(34, slot * 0.62);
@@ -108,7 +145,7 @@ window.Stats = (function () {
 
     let s = `<svg viewBox="0 0 ${W} ${H}" class="stats-svg" role="img" aria-label="${escapeHtml(tt("stats.chart.year.title"))}">`;
     // gridlines + y ticks
-    for (const v of [0, 100, 200, 300]) {
+    for (let v = 0; v <= maxV - 50; v += 100) {
       const yy = y(v);
       s += `<line x1="${padL}" y1="${yy}" x2="${W - padR}" y2="${yy}" class="stats-grid${v === 0 ? " zero" : ""}"/>`;
       s += `<text x="${padL - 8}" y="${yy + 4}" class="stats-tick" text-anchor="end">${v}</text>`;
@@ -126,8 +163,8 @@ window.Stats = (function () {
       if (i === 0 || i === n - 1) {
         s += `<text x="${cx}" y="${by - 8}" class="stats-vallabel" text-anchor="middle">${d.attempts}</text>`;
       }
-      // oversized invisible hit target
-      s += `<rect x="${padL + slot * i}" y="${padT}" width="${slot}" height="${plotH}" fill="transparent" class="stats-hit" data-i="${i}"/>`;
+      // oversized invisible hit target (the <title> doubles as the AT/native tooltip)
+      s += `<rect x="${padL + slot * i}" y="${padT}" width="${slot}" height="${plotH}" fill="transparent" class="stats-hit" data-i="${i}"><title>${d.year}: ${d.attempts} ${escapeHtml(tt("stats.attempts").toLowerCase())}</title></rect>`;
     });
     s += `</svg>`;
     host.innerHTML = s;
@@ -165,7 +202,7 @@ window.Stats = (function () {
       s += `<text x="${padL - 10}" y="${cy + 4}" class="stats-catlabel" text-anchor="end">${escapeHtml(tt("country." + d.key))}</text>`;
       s += `<path d="M${padL},${cy - bh / 2} L${padL + bw - 4},${cy - bh / 2} Q${padL + bw},${cy - bh / 2} ${padL + bw},${cy - bh / 2 + 4} L${padL + bw},${cy + bh / 2 - 4} Q${padL + bw},${cy + bh / 2} ${padL + bw - 4},${cy + bh / 2} L${padL},${cy + bh / 2} Z" fill="${BAR_ORANGE}" class="stats-bar" data-i="${i}"/>`;
       s += `<text x="${padL + bw + 8}" y="${cy + 4}" class="stats-vallabel side" text-anchor="start">${d.attempts}</text>`;
-      s += `<rect x="0" y="${padT + rowH * i}" width="${W}" height="${rowH}" fill="transparent" class="stats-hit" data-i="${i}"/>`;
+      s += `<rect x="0" y="${padT + rowH * i}" width="${W}" height="${rowH}" fill="transparent" class="stats-hit" data-i="${i}"><title>${escapeHtml(tt("country." + d.key))}: ${d.attempts}</title></rect>`;
     });
     s += `</svg>`;
     host.innerHTML = s;
@@ -248,6 +285,15 @@ window.Stats = (function () {
     }
     render();
     document.addEventListener("i18n:change", render);
+
+    loadLive().then(data => {
+      if (!data || !data.y2025 || !data.y2025.attempts) return;
+      live = data;
+      // Fold the live 2025 count into the yearly chart too
+      const y = YEARLY[YEARLY.length - 1];
+      if (y.year === 2025) { y.attempts = data.y2025.attempts; y.successes = data.y2025.successes; }
+      render();
+    }).catch(() => { /* static snapshot remains */ });
   }
 
   init();

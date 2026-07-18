@@ -224,11 +224,65 @@ window.Launches = (function () {
       .replace(/"/g, "&quot;");
   }
 
+  // ---------- Recent results strip ----------
+  const RECENT_API = "https://ll.thespacedevs.com/2.3.0/launches/previous/?limit=6";
+  const RECENT_KEY = "liftoff_recent_v1";
+  const RECENT_TTL = 6 * 60 * 60 * 1000;
+
+  async function loadRecent() {
+    try {
+      const cached = JSON.parse(localStorage.getItem(RECENT_KEY) || "null");
+      if (cached && cached.ts && Date.now() - cached.ts < RECENT_TTL) return cached.items;
+    } catch (_) {}
+    const res = await fetch(RECENT_API, { headers: { Accept: "application/json" } });
+    if (!res.ok) throw new Error("LL2 " + res.status);
+    const items = (await res.json()).results || [];
+    localStorage.setItem(RECENT_KEY, JSON.stringify({ ts: Date.now(), items }));
+    return items;
+  }
+
+  function resultInfo(statusName = "") {
+    const n = statusName.toLowerCase();
+    if (n.includes("partial")) return { cls: "hold", key: "launches.recent.partial" };
+    if (n.includes("failure")) return { cls: "fail", key: "launches.recent.failure" };
+    if (n.includes("success")) return { cls: "go", key: "launches.recent.success" };
+    return { cls: "tbd", key: null };
+  }
+
+  function timeAgo(iso) {
+    if (!iso) return "";
+    const ms = Date.now() - new Date(iso).getTime();
+    const d = Math.floor(ms / 86400000);
+    if (d >= 1) return tt("time.day").replace("{n}", d);
+    const h = Math.floor(ms / 3600000);
+    if (h >= 1) return tt("time.hour").replace("{n}", h);
+    const m = Math.max(1, Math.floor(ms / 60000));
+    return tt("time.min").replace("{n}", m);
+  }
+
+  function renderRecent(el, items) {
+    window._lastRecent = items;
+    el.innerHTML = items.map(it => {
+      const ri = resultInfo(it.status?.name);
+      const label = ri.key ? tt(ri.key) : escapeHtml(it.status?.abbrev || "—");
+      const [rocket, mission] = String(it.name || "").split(" | ");
+      const provider = it.launch_service_provider?.abbrev || it.launch_service_provider?.name || "";
+      return `
+        <div class="recent-row">
+          <span class="launch-status status-${ri.cls}">${label}</span>
+          <span class="recent-rocket">${escapeHtml(rocket || "")}</span>
+          <span class="recent-mission">${escapeHtml(mission || "")}</span>
+          <span class="recent-meta">${escapeHtml(provider)} · ${timeAgo(it.net)}</span>
+        </div>`;
+    }).join("");
+  }
+
   // Re-render labels on language change if currently displayed (instant, no stagger)
   document.addEventListener("i18n:change", () => {
     const grid = document.getElementById("launchesGrid");
-    if (!grid || !window._lastLaunches) return;
-    render(grid, window._lastLaunches, { instant: true });
+    if (grid && window._lastLaunches) render(grid, window._lastLaunches, { instant: true });
+    const strip = document.getElementById("recentStrip");
+    if (strip && window._lastRecent) renderRecent(strip, window._lastRecent);
   });
 
   // Wrap render to remember last items for re-render on i18n change
@@ -238,5 +292,5 @@ window.Launches = (function () {
     _render(grid, items, opts);
   };
 
-  return { load, render };
+  return { load, render, loadRecent, renderRecent };
 })();

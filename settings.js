@@ -3,7 +3,8 @@ window.Settings = (function () {
   const t = (k) => (window.I18n ? window.I18n.t(k) : k);
 
   const DEFAULTS = {
-    reduceMotion: false,
+    // Respect the OS motion preference unless the user overrides it here
+    reduceMotion: !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches),
     starDensity: "med",  // off | low | med | high
     accent: "orange"     // orange | cyan | green
   };
@@ -40,7 +41,8 @@ window.Settings = (function () {
       window.LFAudio.setVolume(1);
     }
     if (window.I18n) {
-      const auto = (navigator.language || "en").toLowerCase().startsWith("es") ? "es" : "en";
+      const nav = (navigator.language || "en").toLowerCase();
+      const auto = nav.startsWith("es") ? "es" : nav.startsWith("fr") ? "fr" : "en";
       window.I18n.set(auto);
     }
     apply();
@@ -95,6 +97,7 @@ window.Settings = (function () {
             <div class="set-chiprow">
               <button class="set-chip${lang === "en" ? " active" : ""}" data-section="lang" data-value="en">English</button>
               <button class="set-chip${lang === "es" ? " active" : ""}" data-section="lang" data-value="es">Español</button>
+              <button class="set-chip${lang === "fr" ? " active" : ""}" data-section="lang" data-value="fr">Français</button>
             </div>
           `)}
 

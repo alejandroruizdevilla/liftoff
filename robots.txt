@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://alejandroruizdevilla.github.io/liftoff/sitemap.xml

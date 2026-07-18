@@ -37,6 +37,7 @@ window.Compare = (function () {
   }
 
   function panel(sim, side) {
+    sim = window.I18n.sim(sim);
     const r = sim.ratings;
     const facts = sim.quickFacts.slice(0, 4);
     return `

@@ -8,18 +8,53 @@
 <link rel="icon" type="image/svg+xml" href="favicon.svg" />
 <meta name="theme-color" content="#04060f" />
 
+<link rel="canonical" href="https://alejandroruizdevilla.github.io/liftoff/" />
+
 <!-- Open Graph -->
 <meta property="og:type" content="website" />
+<meta property="og:url" content="https://alejandroruizdevilla.github.io/liftoff/" />
 <meta property="og:title" content="LIFTOFF // The Rocket Sim Index" />
-<meta property="og:description" content="Nine hand-picked rocket simulators — model rocketry to Apollo cockpits. Live news, launch countdowns, and a guided quiz." />
-<meta property="og:image" content="favicon.svg" />
+<meta property="og:description" content="Nine hand-picked rocket simulators — model rocketry to Apollo cockpits. Live launch data, statistics, and a Δv calculator. EN · ES · FR." />
+<meta property="og:image" content="https://alejandroruizdevilla.github.io/liftoff/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
 <meta property="og:site_name" content="LIFTOFF" />
 
 <!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="LIFTOFF // The Rocket Sim Index" />
 <meta name="twitter:description" content="Nine hand-picked rocket simulators — model rocketry to Apollo cockpits." />
-<meta name="twitter:image" content="favicon.svg" />
+<meta name="twitter:image" content="https://alejandroruizdevilla.github.io/liftoff/og-image.png" />
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "name": "LIFTOFF — The Rocket Sim Index",
+      "url": "https://alejandroruizdevilla.github.io/liftoff/",
+      "inLanguage": ["en", "es", "fr"],
+      "description": "Nine hand-picked rocket simulators, from model rocketry to full Apollo cockpits, with live launch data and statistics."
+    },
+    {
+      "@type": "ItemList",
+      "name": "The Launch Manifest — recommended rocket simulators",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "url": "https://alejandroruizdevilla.github.io/liftoff/#/sim/kerbal-space-program", "item": { "@type": "SoftwareApplication", "name": "Kerbal Space Program", "applicationCategory": "GameApplication", "url": "https://www.kerbalspaceprogram.com/" } },
+        { "@type": "ListItem", "position": 2, "url": "https://alejandroruizdevilla.github.io/liftoff/#/sim/openrocket", "item": { "@type": "SoftwareApplication", "name": "OpenRocket", "applicationCategory": "EducationalApplication", "url": "https://openrocket.info/" } },
+        { "@type": "ListItem", "position": 3, "url": "https://alejandroruizdevilla.github.io/liftoff/#/sim/juno-new-origins", "item": { "@type": "SoftwareApplication", "name": "Juno: New Origins", "applicationCategory": "GameApplication", "url": "https://www.simplerockets.com/" } },
+        { "@type": "ListItem", "position": 4, "url": "https://alejandroruizdevilla.github.io/liftoff/#/sim/orbiter", "item": { "@type": "SoftwareApplication", "name": "Orbiter 2024", "applicationCategory": "EducationalApplication", "url": "http://orbit.medphys.ucl.ac.uk/" } },
+        { "@type": "ListItem", "position": 5, "url": "https://alejandroruizdevilla.github.io/liftoff/#/sim/rocksim", "item": { "@type": "SoftwareApplication", "name": "RockSim", "applicationCategory": "EducationalApplication", "url": "https://www.apogeerockets.com/Rocket_Software/RockSim" } },
+        { "@type": "ListItem", "position": 6, "url": "https://alejandroruizdevilla.github.io/liftoff/#/sim/spaceflight-simulator", "item": { "@type": "SoftwareApplication", "name": "Spaceflight Simulator", "applicationCategory": "GameApplication", "url": "https://spaceflightsimulator.app/" } },
+        { "@type": "ListItem", "position": 7, "url": "https://alejandroruizdevilla.github.io/liftoff/#/sim/reentry", "item": { "@type": "SoftwareApplication", "name": "Reentry — Orbital Sim", "applicationCategory": "GameApplication", "url": "https://reentrygame.com/" } },
+        { "@type": "ListItem", "position": 8, "url": "https://alejandroruizdevilla.github.io/liftoff/#/sim/children-of-a-dead-earth", "item": { "@type": "SoftwareApplication", "name": "Children of a Dead Earth", "applicationCategory": "GameApplication", "url": "https://store.steampowered.com/app/476530/Children_of_a_Dead_Earth/" } },
+        { "@type": "ListItem", "position": 9, "url": "https://alejandroruizdevilla.github.io/liftoff/#/sim/rocketpy", "item": { "@type": "SoftwareApplication", "name": "RocketPy", "applicationCategory": "EducationalApplication", "url": "https://docs.rocketpy.org/" } }
+      ]
+    }
+  ]
+}
+</script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -205,6 +240,11 @@
   </div>
 </div>
 
+<!-- ============ SIM OF THE DAY ============ -->
+<section class="spotlight-section">
+  <div class="spotlight-card" id="spotlightCard"></div>
+</section>
+
 <!-- ============ NEWS SECTION ============ -->
 <section class="news-section" id="news">
   <div class="section-label" data-i18n="news.label">// LIVE FEED</div>
@@ -240,6 +280,11 @@
     <span class="news-meta" data-i18n="launches.auto">Auto-refresh hourly · Source: The Space Devs</span>
   </p>
 
+  <div class="recent-wrap" id="recentWrap" hidden>
+    <div class="recent-title" data-i18n="launches.recent.title">Recent Results</div>
+    <div class="recent-strip" id="recentStrip"></div>
+  </div>
+
   <div class="launches-grid" id="launchesGrid">
     <div class="news-loading">
       <div class="spinner"></div>
@@ -274,6 +319,14 @@
     </button>
   </div>
   <div class="stats-tables" id="statsTables" hidden></div>
+</section>
+
+<!-- ============ Δv CALCULATOR ============ -->
+<section class="dv-section" id="dv">
+  <div class="section-label" data-i18n="dv.label">// FLIGHT COMPUTER</div>
+  <h2 class="section-title" data-i18n="dv.title">The Δv Calculator</h2>
+  <p class="section-sub" data-i18n="dv.sub">Tsiolkovsky's rocket equation, live. Drag the sliders and see how far your rocket could go.</p>
+  <div class="dv-card" id="dvCalc"></div>
 </section>
 
 <!-- ============ MANIFEST ============ -->
@@ -342,6 +395,8 @@
 <script src="news.js"></script>
 <script src="launches.js"></script>
 <script src="stats.js"></script>
+<script src="sims.i18n.js"></script>
+<script src="dv.js"></script>
 <script src="audio.js"></script>
 <script src="launch.js"></script>
 <script src="quiz.js"></script>
