@@ -48,8 +48,11 @@ jobs:
           args: >-
             --no-progress
             --accept 200..=299,403,429
+            --timeout 45
+            --max-retries 2
             --exclude thespacedevs.com
             --exclude localhost
             --exclude YOURCODE.goatcounter.com
+            --exclude alejandroruizdevilla.github.io
             sims.js index.html
           fail: true
