@@ -42,7 +42,7 @@ window.Settings = (function () {
     }
     if (window.I18n) {
       const nav = (navigator.language || "en").toLowerCase();
-      const auto = nav.startsWith("es") ? "es" : nav.startsWith("fr") ? "fr" : "en";
+      const auto = window.I18n.locales.find(l => l !== "en" && nav.startsWith(l)) || "en";
       window.I18n.set(auto);
     }
     apply();
@@ -98,6 +98,8 @@ window.Settings = (function () {
               <button class="set-chip${lang === "en" ? " active" : ""}" data-section="lang" data-value="en">English</button>
               <button class="set-chip${lang === "es" ? " active" : ""}" data-section="lang" data-value="es">Español</button>
               <button class="set-chip${lang === "fr" ? " active" : ""}" data-section="lang" data-value="fr">Français</button>
+              <button class="set-chip${lang === "de" ? " active" : ""}" data-section="lang" data-value="de">Deutsch</button>
+              <button class="set-chip${lang === "pt" ? " active" : ""}" data-section="lang" data-value="pt">Português</button>
             </div>
           `)}
 

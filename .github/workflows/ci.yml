@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    # Weekly link-rot check, Mondays 07:00 UTC
+    - cron: "0 7 * * 1"
+
+jobs:
+  syntax:
+    name: JS syntax & locale packs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: node --check every script
+        run: |
+          set -e
+          for f in *.js locales/*.js; do
+            node --check "$f"
+            echo "OK $f"
+          done
+      - name: Locale packs parse and are complete
+        run: |
+          node -e '
+            const packs = ["es","fr","de","pt"];
+            for (const l of packs) {
+              global.window = { I18n: { registerPack: (n, p) => { global.__p = p; } } };
+              require("./locales/" + l + ".js");
+              const p = global.__p;
+              const sims = Object.keys(p.sims || {}).length;
+              if (sims !== 9) throw new Error(l + ": expected 9 sims, got " + sims);
+              console.log(l, "ok — sims:", sims, "dict:", p.dict ? Object.keys(p.dict).length : "(inline)");
+            }
+          '
+
+  links:
+    name: External link check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --no-progress
+            --accept 200..=299,403,429
+            --exclude thespacedevs.com
+            --exclude localhost
+            --exclude YOURCODE.goatcounter.com
+            sims.js index.html
+          fail: true

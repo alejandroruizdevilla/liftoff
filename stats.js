@@ -18,14 +18,14 @@ window.Stats = (function () {
   ];
 
   const COUNTRIES = [
-    { key: "usa",    attempts: 190 },
-    { key: "china",  attempts: 90 },
-    { key: "russia", attempts: 16 },
-    { key: "india",  attempts: 10 },
-    { key: "japan",  attempts: 6 },
-    { key: "europe", attempts: 5 },
+    { key: "usa",    attempts: 205 },
+    { key: "china",  attempts: 92 },
+    { key: "russia", attempts: 14 },
+    { key: "india",  attempts: 8 },
+    { key: "japan",  attempts: 7 },
+    { key: "europe", attempts: 7 },
     { key: "iran",   attempts: 4 },
-    { key: "other",  attempts: 3 }
+    { key: "other",  attempts: 4 }
   ];
 
   // Chart fills validated for the dark surface (contrast + CVD); the brighter
@@ -133,12 +133,22 @@ window.Stats = (function () {
     return `M${x},${y + h} L${x},${y + r} Q${x},${y} ${x + r},${y} L${x + w - r},${y} Q${x + w},${y} ${x + w},${y + r} L${x + w},${y + h} Z`;
   }
 
+  // Chart series: the curated decade, plus a live in-progress bar for the
+  // current year once the API has answered.
+  function chartYears() {
+    if (live && live.ytd.attempts > 0 && live.ytd.year > latest.year) {
+      return YEARLY.concat([{ year: live.ytd.year, attempts: live.ytd.attempts, successes: null, partial: true }]);
+    }
+    return YEARLY;
+  }
+
   // ---------- yearly bar chart ----------
   function renderYearChart(host) {
+    const data = chartYears();
     const W = 640, H = 300, padL = 46, padR = 12, padT = 26, padB = 30;
     const plotW = W - padL - padR, plotH = H - padT - padB;
-    const maxV = Math.max(350, Math.ceil(Math.max(...YEARLY.map(d => d.attempts)) / 100) * 100);
-    const n = YEARLY.length;
+    const maxV = Math.max(350, Math.ceil(Math.max(...data.map(d => d.attempts)) / 100) * 100);
+    const n = data.length;
     const slot = plotW / n;
     const barW = Math.min(34, slot * 0.62);
     const y = v => padT + plotH * (1 - v / maxV);
@@ -150,11 +160,11 @@ window.Stats = (function () {
       s += `<line x1="${padL}" y1="${yy}" x2="${W - padR}" y2="${yy}" class="stats-grid${v === 0 ? " zero" : ""}"/>`;
       s += `<text x="${padL - 8}" y="${yy + 4}" class="stats-tick" text-anchor="end">${v}</text>`;
     }
-    YEARLY.forEach((d, i) => {
+    data.forEach((d, i) => {
       const cx = padL + slot * i + slot / 2;
       const bx = cx - barW / 2;
       const by = y(d.attempts);
-      s += `<path d="${topRoundRect(bx, by, barW, padT + plotH - by, 4)}" fill="${BAR_CYAN}" class="stats-bar" data-i="${i}"/>`;
+      s += `<path d="${topRoundRect(bx, by, barW, padT + plotH - by, 4)}" fill="${BAR_CYAN}" ${d.partial ? 'opacity="0.5"' : ""} class="stats-bar" data-i="${i}"/>`;
       // x labels: every other year to stay uncluttered
       if (i % 2 === 1 || i === n - 1) {
         s += `<text x="${cx}" y="${H - 10}" class="stats-tick" text-anchor="middle">’${String(d.year).slice(2)}</text>`;
@@ -164,21 +174,21 @@ window.Stats = (function () {
         s += `<text x="${cx}" y="${by - 8}" class="stats-vallabel" text-anchor="middle">${d.attempts}</text>`;
       }
       // oversized invisible hit target (the <title> doubles as the AT/native tooltip)
-      s += `<rect x="${padL + slot * i}" y="${padT}" width="${slot}" height="${plotH}" fill="transparent" class="stats-hit" data-i="${i}"><title>${d.year}: ${d.attempts} ${escapeHtml(tt("stats.attempts").toLowerCase())}</title></rect>`;
+      s += `<rect x="${padL + slot * i}" y="${padT}" width="${slot}" height="${plotH}" fill="transparent" class="stats-hit" data-i="${i}"><title>${d.year}: ${d.attempts} ${escapeHtml(tt("stats.attempts").toLowerCase())}${d.partial ? " (" + escapeHtml(tt("stats.ytd")) + ")" : ""}</title></rect>`;
     });
     s += `</svg>`;
     host.innerHTML = s;
 
     const svg = host.querySelector("svg");
     svg.querySelectorAll(".stats-hit").forEach(hit => {
-      const i = +hit.dataset.i, d = YEARLY[i];
+      const i = +hit.dataset.i, d = data[i];
       const bar = svg.querySelector(`.stats-bar[data-i="${i}"]`);
       const move = e => {
         bar.setAttribute("fill", BAR_CYAN_HOVER);
         showTip(
-          `<div class="tip-title">${d.year}</div>` +
+          `<div class="tip-title">${d.year}${d.partial ? " · " + escapeHtml(tt("stats.ytd")) : ""}</div>` +
           `<div><span class="tip-dot" style="background:${BAR_CYAN_HOVER}"></span>${escapeHtml(tt("stats.attempts"))} · <b>${d.attempts}</b></div>` +
-          `<div>${escapeHtml(tt("stats.successes"))} · <b>${d.successes}</b> (${fmtPct(d.successes / d.attempts * 100)})</div>`,
+          (d.partial ? "" : `<div>${escapeHtml(tt("stats.successes"))} · <b>${d.successes}</b> (${fmtPct(d.successes / d.attempts * 100)})</div>`),
           e.clientX, e.clientY
         );
       };
@@ -232,7 +242,7 @@ window.Stats = (function () {
         <table class="stats-table mono">
           <caption>${escapeHtml(tt("stats.chart.year.title"))}</caption>
           <thead><tr><th>${escapeHtml(tt("stats.table.year"))}</th><th>${escapeHtml(tt("stats.attempts"))}</th><th>${escapeHtml(tt("stats.successes"))}</th></tr></thead>
-          <tbody>${YEARLY.map(d => `<tr><td>${d.year}</td><td>${d.attempts}</td><td>${d.successes}</td></tr>`).join("")}</tbody>
+          <tbody>${chartYears().map(d => `<tr><td>${d.year}${d.partial ? " *" : ""}</td><td>${d.attempts}</td><td>${d.partial ? "—" : d.successes}</td></tr>`).join("")}${live && live.ytd.attempts > 0 ? `<tr><td colspan="3" class="stats-table-note">* ${escapeHtml(tt("stats.ytd"))}</td></tr>` : ""}</tbody>
         </table>
         <table class="stats-table mono">
           <caption>${escapeHtml(tt("stats.chart.country.title"))}</caption>
@@ -256,7 +266,7 @@ window.Stats = (function () {
     charts.innerHTML = `
       <div class="stats-chart-card">
         <div class="stats-chart-title">${escapeHtml(tt("stats.chart.year.title"))}</div>
-        <div class="stats-chart-sub">${escapeHtml(tt("stats.chart.year.sub"))}</div>
+        <div class="stats-chart-sub">${escapeHtml(tt("stats.chart.year.sub").replace("2016–2025", "2016–" + chartYears()[chartYears().length - 1].year))}</div>
         <div class="stats-chart-plot" data-plot="year"></div>
       </div>
       <div class="stats-chart-card">

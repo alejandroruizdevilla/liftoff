@@ -153,7 +153,7 @@ window.SIMS = [
     paid: false,
     platforms: "Windows",
     systemReq: "Win 7+, modest GPU",
-    link: "http://orbit.medphys.ucl.ac.uk/",
+    link: "https://github.com/orbitersim/orbiter",
     stars: 4,
     ratings: { realism: 5, accessibility: 2, depth: 5, learningCurve: 1, community: 4 },
     pros: [
@@ -242,7 +242,7 @@ window.SIMS = [
     paid: false,
     platforms: "iOS · Android · Win",
     systemReq: "Modest mobile/desktop hardware",
-    link: "https://spaceflightsimulator.app/",
+    link: "https://store.steampowered.com/app/1718870/Spaceflight_Simulator/",
     stars: 4,
     ratings: { realism: 3, accessibility: 5, depth: 3, learningCurve: 5, community: 4 },
     pros: [

@@ -73,7 +73,8 @@ window.I18n = (function () {
       "stats.label": "// FLIGHT RECORDS",
       "stats.title": "Launch Statistics",
       "stats.sub": "How busy is the worldwide pad? A decade of orbital launch attempts, compiled from public launch logs.",
-      "stats.note": "Approximate figures · curated snapshot · early 2026",
+      "stats.note": "Approximate figures · 2016–2025 curated, current year live",
+      "stats.ytd": "year to date",
       "stats.tile.attempts": "Orbital attempts · 2025",
       "stats.tile.attempts.detail": "worldwide, all providers",
       "stats.tile.ytd": "Orbital attempts · {y} YTD",
@@ -300,7 +301,8 @@ window.I18n = (function () {
       "stats.label": "// REGISTRO DE VUELO",
       "stats.title": "Estadísticas de Lanzamiento",
       "stats.sub": "¿Cuánta actividad hay en las plataformas del mundo? Una década de intentos de lanzamiento orbital, recopilados de registros públicos.",
-      "stats.note": "Cifras aproximadas · instantánea curada · principios de 2026",
+      "stats.note": "Cifras aproximadas · 2016–2025 curado, año actual en vivo",
+      "stats.ytd": "acumulado del año",
       "stats.tile.attempts": "Intentos orbitales · 2025",
       "stats.tile.attempts.detail": "todo el mundo, todos los operadores",
       "stats.tile.ytd": "Intentos orbitales · {y} acumulado",
@@ -452,11 +454,46 @@ window.I18n = (function () {
     }
   };
 
+  // Locales beyond en/es ship as lazy-loaded packs (dict + sim content) that
+  // call I18n.registerPack when they arrive; es ships its sim content the same way.
+  const KNOWN = ["en", "es", "fr", "de", "pt"];
+  const PACKS = { es: "locales/es.js", fr: "locales/fr.js", de: "locales/de.js", pt: "locales/pt.js" };
+  const loadedPacks = { en: true };
+
   let locale = localStorage.getItem(STORAGE);
-  if (!locale || !DICT[locale]) {
+  if (!locale || !KNOWN.includes(locale)) {
     const nav = (navigator.language || "en").toLowerCase();
-    locale = nav.startsWith("es") ? "es" : nav.startsWith("fr") ? "fr" : "en";
+    locale = KNOWN.find(l => l !== "en" && nav.startsWith(l)) || "en";
   }
+  // ?lang=xx overrides and persists (shareable per-language URLs)
+  try {
+    const urlLang = new URLSearchParams(location.search).get("lang");
+    if (urlLang && KNOWN.includes(urlLang)) {
+      locale = urlLang;
+      localStorage.setItem(STORAGE, locale);
+    }
+  } catch (_) {}
+
+  function ensurePack(name) {
+    if (loadedPacks[name] || !PACKS[name]) return;
+    loadedPacks[name] = "loading";
+    const s = document.createElement("script");
+    s.src = PACKS[name];
+    s.onerror = () => { loadedPacks[name] = false; };
+    document.head.appendChild(s);
+  }
+
+  function registerPack(name, pack) {
+    loadedPacks[name] = true;
+    if (pack && pack.dict) DICT[name] = Object.assign(DICT[name] || {}, pack.dict);
+    if (pack && pack.sims) {
+      window.SIMS_I18N = window.SIMS_I18N || {};
+      window.SIMS_I18N[name] = pack.sims;
+    }
+    if (name === locale) apply();
+  }
+
+  ensurePack(locale);
 
   function t(key, vars) {
     let s = (DICT[locale] && DICT[locale][key]) || DICT.en[key] || key;
@@ -487,19 +524,15 @@ window.I18n = (function () {
   }
 
   function set(newLocale) {
-    if (!DICT[newLocale]) return;
+    if (!KNOWN.includes(newLocale)) return;
     locale = newLocale;
     localStorage.setItem(STORAGE, locale);
-    apply();
+    if (loadedPacks[newLocale] === true || !PACKS[newLocale]) apply();
+    else ensurePack(newLocale); // registerPack applies once the pack arrives
   }
 
   function get() { return locale; }
 
-  // Locale packs too big to inline here (e.g. French) register themselves
-  // from later-loaded scripts; sims.i18n.js carries them.
-  function addLocale(name, dict) {
-    if (name && dict) DICT[name] = dict;
-  }
 
   // Localized view of a sim entry: editorial fields come from SIMS_I18N when a
   // translation exists for the active locale; everything else falls through.
@@ -509,5 +542,5 @@ window.I18n = (function () {
     return o ? Object.assign({}, s, o) : s;
   }
 
-  return { t, apply, set, get, sim, addLocale };
+  return { t, apply, set, get, sim, registerPack, locales: KNOWN.slice() };
 })();

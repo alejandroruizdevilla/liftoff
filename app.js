@@ -632,4 +632,11 @@
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;");
   }
+
+  // ============ SERVICE WORKER (offline shell) ============
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("sw.js").catch(() => {});
+    });
+  }
 })();
