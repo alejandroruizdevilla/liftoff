@@ -342,6 +342,29 @@
   <div class="dv-card" id="dvCalc"></div>
 </section>
 
+<!-- ============ ARCADE ============ -->
+<section class="arcade-section" id="arcade">
+  <div class="section-label" data-i18n="arcade.label">// FLIGHT DECK</div>
+  <h2 class="section-title" data-i18n="arcade.title">The Arcade</h2>
+  <p class="section-sub" data-i18n="arcade.sub">Hand-built minigames on the house physics engine. No ads, no downloads — just Newton being difficult.</p>
+  <div class="arcade-grid">
+    <a class="arcade-card" href="#/arcade/lander">
+      <div class="arcade-glyph">🌙</div>
+      <h3 data-i18n="arcade.lander.name">Lunar Lander</h3>
+      <p data-i18n="arcade.lander.desc">Gravity is patient. Kill your speed, mind your fuel, and put it down gently on the pad.</p>
+      <span class="arcade-best mono" id="bestLander" hidden></span>
+      <span class="btn primary arcade-play"><span data-i18n="arcade.play">Play</span> <span class="arrow">→</span></span>
+    </a>
+    <a class="arcade-card" href="#/arcade/slingshot">
+      <div class="arcade-glyph">🪐</div>
+      <h3 data-i18n="arcade.sling.name">Gravity Slingshot</h3>
+      <p data-i18n="arcade.sling.desc">Drag, aim, release. Bend your probe's path around planets and thread the target ring.</p>
+      <span class="arcade-best mono" id="bestSling" hidden></span>
+      <span class="btn primary arcade-play"><span data-i18n="arcade.play">Play</span> <span class="arrow">→</span></span>
+    </a>
+  </div>
+</section>
+
 <!-- ============ MANIFEST ============ -->
 <main id="index">
   <div class="section-label" data-i18n="manifest.label">// 09 ENTRIES</div>
@@ -380,6 +403,9 @@
 <!-- ============ SETTINGS MODAL ============ -->
 <div id="settingsModal" class="quiz-modal"></div>
 
+<!-- ============ ARCADE MODAL ============ -->
+<div id="arcadeModal" class="quiz-modal"></div>
+
 <!-- ============ LAUNCH OVERLAY ============ -->
 <div class="launch-overlay" id="launchOverlay">
   <div class="launch-grid"></div>
@@ -413,6 +439,7 @@
 <script src="launch.js"></script>
 <script src="quiz.js"></script>
 <script src="compare.js"></script>
+<script src="arcade.js"></script>
 <script src="settings.js"></script>
 <script src="app.js"></script>
 </body>

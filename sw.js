@@ -2,7 +2,7 @@
 // Same-origin GETs are served stale-while-revalidate; API calls (news,
 // launch data) go straight to the network — the app already caches those
 // responses in localStorage with its own TTLs.
-const CACHE = "liftoff-v1";
+const CACHE = "liftoff-v2";
 const PRECACHE = [
   "./",
   "index.html",
@@ -18,6 +18,7 @@ const PRECACHE = [
   "launch.js",
   "quiz.js",
   "compare.js",
+  "arcade.js",
   "settings.js",
   "app.js",
   "favicon.svg",

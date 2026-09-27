@@ -462,3 +462,34 @@ window.I18n.registerPack("de", { dict: {
     ]
   }
 } });
+
+// Arcade strings (merged into the dict above by registerPack)
+window.I18n.registerPack("de", { dict: {
+  "arcade.label": "// FLUGDECK",
+  "arcade.title": "Die Arcade",
+  "arcade.sub": "Handgebaute Minispiele auf der hauseigenen Physik-Engine. Keine Werbung, kein Download — nur Newton, der sich querstellt.",
+  "arcade.play": "Spielen",
+  "arcade.best": "Rekord",
+  "arcade.lander.name": "Mondlandefähre",
+  "arcade.lander.desc": "Die Schwerkraft ist geduldig. Bau deine Geschwindigkeit ab, achte auf den Treibstoff und setz sanft auf der Plattform auf.",
+  "arcade.sling.name": "Gravitationsschleuder",
+  "arcade.sling.desc": "Ziehen, zielen, loslassen. Krümme die Bahn deiner Sonde um Planeten und triff den Zielring.",
+  "game.fuel": "SPRIT",
+  "game.vspeed": "V-TEMPO",
+  "game.hspeed": "H-TEMPO",
+  "game.alt": "HÖHE",
+  "game.level": "LEVEL",
+  "game.launches": "STARTS",
+  "game.landed": "AUFSETZEN · NOMINAL",
+  "game.hard": "HARTER KONTAKT · LANDER VERLOREN",
+  "game.crash": "SCHNELLE UNGEPLANTE DEMONTAGE",
+  "game.hit": "ZIEL ERFASST",
+  "game.lost": "SONDE VERLOREN",
+  "game.complete": "MISSION ABGESCHLOSSEN",
+  "game.score": "Punkte",
+  "game.retry": "Nochmal fliegen",
+  "game.next": "Nächstes Level",
+  "game.close": "Schließen",
+  "game.hint.lander": "← → drehen · ↑ / LEERTASTE Schub — oder halte die Tasten",
+  "game.hint.sling": "Von der Sonde ziehen zum Zielen · loslassen zum Starten"
+} });

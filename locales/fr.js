@@ -462,3 +462,34 @@ window.I18n.registerPack("fr", { dict: {
     ]
   }
 } });
+
+// Arcade strings (merged into the dict above by registerPack)
+window.I18n.registerPack("fr", { dict: {
+  "arcade.label": "// PONT D'ENVOL",
+  "arcade.title": "L'Arcade",
+  "arcade.sub": "Des mini-jeux faits maison sur le moteur physique de la maison. Sans pubs, sans téléchargement — juste Newton qui se montre difficile.",
+  "arcade.play": "Jouer",
+  "arcade.best": "Record",
+  "arcade.lander.name": "Alunisseur",
+  "arcade.lander.desc": "La gravité est patiente. Cassez votre vitesse, surveillez votre carburant et posez-vous en douceur sur la plateforme.",
+  "arcade.sling.name": "Fronde Gravitationnelle",
+  "arcade.sling.desc": "Glissez, visez, relâchez. Courbez la trajectoire de votre sonde autour des planètes et enfilez l'anneau cible.",
+  "game.fuel": "CARB",
+  "game.vspeed": "V-VERT",
+  "game.hspeed": "V-HORIZ",
+  "game.alt": "ALT",
+  "game.level": "NIVEAU",
+  "game.launches": "LANCEMENTS",
+  "game.landed": "ALUNISSAGE · NOMINAL",
+  "game.hard": "CONTACT DUR · MODULE PERDU",
+  "game.crash": "DÉSASSEMBLAGE RAPIDE NON PLANIFIÉ",
+  "game.hit": "CIBLE ATTEINTE",
+  "game.lost": "SONDE PERDUE",
+  "game.complete": "MISSION ACCOMPLIE",
+  "game.score": "Score",
+  "game.retry": "Revoler",
+  "game.next": "Niveau suivant",
+  "game.close": "Fermer",
+  "game.hint.lander": "← → pivoter · ↑ / ESPACE poussée — ou maintenez les boutons",
+  "game.hint.sling": "Glissez depuis la sonde pour viser · relâchez pour lancer"
+} });

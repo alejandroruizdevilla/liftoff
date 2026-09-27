@@ -489,3 +489,34 @@ window.I18n.registerPack("pt", { dict: {
     ]
   }
 } });
+
+// Arcade strings (merged into the dict above by registerPack)
+window.I18n.registerPack("pt", { dict: {
+  "arcade.label": "// CONVÉS DE VOO",
+  "arcade.title": "O Arcade",
+  "arcade.sub": "Minijogos feitos à mão sobre o motor de física da casa. Sem anúncios, sem downloads — só o Newton a dificultar.",
+  "arcade.play": "Jogar",
+  "arcade.best": "Recorde",
+  "arcade.lander.name": "Módulo Lunar",
+  "arcade.lander.desc": "A gravidade é paciente. Trava a tua velocidade, poupa combustível e pousa suavemente na plataforma.",
+  "arcade.sling.name": "Fisga Gravitacional",
+  "arcade.sling.desc": "Arrasta, aponta, larga. Curva a trajetória da tua sonda à volta dos planetas e enfia-a no anel-alvo.",
+  "game.fuel": "COMB",
+  "game.vspeed": "V-VERT",
+  "game.hspeed": "V-HORIZ",
+  "game.alt": "ALT",
+  "game.level": "NÍVEL",
+  "game.launches": "LANÇAMENTOS",
+  "game.landed": "ALUNAGEM · NOMINAL",
+  "game.hard": "CONTACTO DURO · MÓDULO PERDIDO",
+  "game.crash": "DESMONTAGEM RÁPIDA NÃO PROGRAMADA",
+  "game.hit": "ALVO ATINGIDO",
+  "game.lost": "SONDA PERDIDA",
+  "game.complete": "MISSÃO CUMPRIDA",
+  "game.score": "Pontuação",
+  "game.retry": "Voar de novo",
+  "game.next": "Nível seguinte",
+  "game.close": "Fechar",
+  "game.hint.lander": "← → rodar · ↑ / ESPAÇO propulsão — ou mantém os botões",
+  "game.hint.sling": "Arrasta a partir da sonda para apontar · larga para lançar"
+} });

@@ -567,6 +567,15 @@
       window.Quiz.close();
     }
 
+    // Arcade routes
+    const arcadeMatch = stripped.match(/^arcade\/(lander|slingshot)$/);
+    if (arcadeMatch) {
+      window.Arcade.open(arcadeMatch[1]);
+      return;
+    } else if (window.Arcade && window.Arcade.isOpen()) {
+      window.Arcade.close();
+    }
+
     // Sim detail route
     const simMatch = stripped.match(/^sim\/(.+)$/);
     if (simMatch && window.SIM_BY_ID[simMatch[1]]) {
