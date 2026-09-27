@@ -2,7 +2,7 @@
 // Same-origin GETs are served stale-while-revalidate; API calls (news,
 // launch data) go straight to the network — the app already caches those
 // responses in localStorage with its own TTLs.
-const CACHE = "liftoff-v2";
+const CACHE = "liftoff-v3";
 const PRECACHE = [
   "./",
   "index.html",
@@ -50,6 +50,23 @@ self.addEventListener("activate", (e) => {
 self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
   if (e.request.method !== "GET" || url.origin !== location.origin) return;
+
+  // Navigations go network-first so a deploy shows up on the next visit;
+  // the cached shell only serves when offline.
+  if (e.request.mode === "navigate") {
+    e.respondWith(
+      fetch(e.request).then(res => {
+        if (res && res.ok) {
+          const copy = res.clone();
+          caches.open(CACHE).then(c => c.put(e.request, copy));
+        }
+        return res;
+      }).catch(() => caches.match(e.request).then(c => c || caches.match("./")))
+    );
+    return;
+  }
+
+  // Assets: stale-while-revalidate
   e.respondWith(
     caches.match(e.request).then(cached => {
       const fresh = fetch(e.request).then(res => {
