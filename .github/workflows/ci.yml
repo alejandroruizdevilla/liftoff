@@ -29,12 +29,16 @@ jobs:
           node -e '
             const packs = ["es","fr","de","pt"];
             for (const l of packs) {
-              global.window = { I18n: { registerPack: (n, p) => { global.__p = p; } } };
+              // a pack may call registerPack several times (base + patches) — accumulate
+              const acc = { dict: {}, sims: {} };
+              global.window = { I18n: { registerPack: (n, p) => {
+                if (p && p.dict) Object.assign(acc.dict, p.dict);
+                if (p && p.sims) Object.assign(acc.sims, p.sims);
+              } } };
               require("./locales/" + l + ".js");
-              const p = global.__p;
-              const sims = Object.keys(p.sims || {}).length;
+              const sims = Object.keys(acc.sims).length;
               if (sims !== 9) throw new Error(l + ": expected 9 sims, got " + sims);
-              console.log(l, "ok — sims:", sims, "dict:", p.dict ? Object.keys(p.dict).length : "(inline)");
+              console.log(l, "ok — sims:", sims, "dict keys:", Object.keys(acc.dict).length || "(inline)");
             }
           '
 
